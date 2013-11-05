@@ -17,12 +17,12 @@ Caution: Do not place these files in a system path.
 
 Usage:
 
-See the file testLMIO.py for example usage. Mainly, three functions are implemented getMeasure(), getMeasureDistribution() and
+See the file ExampleUsage.py for example usage. Mainly, three functions are implemented getMeasure(), getMeasureDistribution() and
 getMeasureDependence().
 
 The general workflow:
     1. make a new LMIO object, initializing it with the path to an swcfile.
-    2. call one of the three functions specifying the measures required.
+    2. call one of the three functions specifying the measures required.(The measure names are available in the LM help files)
     3. read output dictionary LMIO.LMOutput for the output.
 
 Usage Notes:

@@ -2,6 +2,7 @@ import os
 import subprocess
 import platform
 import pkgutil
+from sys import exit
 
 
 class LMIO:
@@ -9,53 +10,54 @@ class LMIO:
     Wrapper class for using L-meausure via python scripting.
     """
 
-    (bit, linkage) = platform.architecture()
-    LMPath = 'Lm' + bit[:2] + '/'
+    LMPath = ''
+    LMExec = ''
 
-    functionRef = ['Soma_Surface',
-                   'N_stems',
-                   'N_bifs',
-                   'N_branch',
-                   'N_tips',
-                   'Width',
-                   'Height',
-                   'Depth',
-                   'Type',
-                   'Diameter',
-                   'Diameter_pow',
-                   'Length',
-                   'Surface',
-                   'SectionArea',
-                   'Volume',
-                   'EucDistance',
-                   'PathDistance',
-                   'Branch_Order',
-                   'Terminal_degree',
-                   'TerminalSegment',
-                   'Taper_1',
-                   'Taper_2',
-                   'Branch_pathlength',
-                   'Contraction',
-                   'Fragmentation',
-                   'Daughter_Ratio',
-                   'Parent_Daughter_Ratio',
-                   'Partition_asymmetry',
-                   'Rall_Power',
-                   'Pk',
-                   'Pk_classic',
-                   'Pk_2',
-                   'Bif_ampl_local',
-                   'Bif_ampl_remote',
-                   'Bif_tilt_local',
-                   'Bif_tilt_remote',
-                   'Bif_torque_local',
-                   'Bif_torque_remote',
-                   'Last_parent_diam',
-                   'Diam_threshold',
-                   'HillmanThreshold',
-                   'Hausdorff',
-                   'Helix',
-                   'Fractal_Dim']
+
+    functionRef = {'Soma_Surface'           :0,
+                   'N_stems'                :1,
+                   'N_bifs'                 :2,
+                   'N_branch'               :3,
+                   'N_tips'                 :4,
+                   'Width'                  :5,
+                   'Height'                 :6,
+                   'Depth'                  :7,
+                   'Type'                   :8,
+                   'Diameter'               :9,
+                   'Diameter_pow'           :10,
+                   'Length'                 :11,
+                   'Surface'                :12,
+                   'SectionArea'            :13,
+                   'Volume'                 :14,
+                   'EucDistance'            :15,
+                   'PathDistance'           :16,
+                   'XYZ'                    :17,
+                   'Branch_Order'           :18,
+                   'Terminal_degree'        :19,
+                   'TerminalSegment'        :20,
+                   'Taper_1'                :21,
+                   'Taper_2'                :22,
+                   'Branch_pathlength'      :23,
+                   'Contraction'            :24,
+                   'Fragmentation'          :25,
+                   'Daughter_Ratio'         :26,
+                   'Parent_Daughter_Ratio'  :27,
+                   'Partition_asymmetry'    :28,
+                   'Rall_Power'             :29,
+                   'Pk'                     :30,
+                   'Pk_classic'             :31,
+                   'Pk_2'                   :32,
+                   'Bif_ampl_local'         :33,
+                   'Bif_ampl_remote'        :34,
+                   'Bif_tilt_local'         :35,
+                   'Bif_tilt_remote'        :36,
+                   'Bif_torque_local'       :37,
+                   'Bif_torque_remote'      :38,
+                   'Last_parent_diam'       :39,
+                   'Diam_threshold'         :40,
+                   'HillmanThreshold'       :41,
+                   'Helix'                  :43,
+                   'Fractal_Dim'            :44}
 
     LMOutput = dict(rawData=[],
                     measure1BinCentres=[],
@@ -131,6 +133,16 @@ class LMIO:
         if not os.path.isdir('tmp'):
             os.mkdir('tmp')
 
+        osName = platform.system()
+        if osName == 'Linux':
+            (bit, linkage) = platform.architecture()
+            self.LMPath = 'LMLinux' + bit[:2] + '/'
+            self.LMExec = 'lmeasure'
+
+        else:
+            print 'Currently, this wrapper is supported only on Linux. Sorry for the inconvenience.'
+            exit(1)
+
     #*******************************************************************************************************************
 
     def writeLMIn(self, line1, line2, line3):
@@ -166,11 +178,12 @@ class LMIO:
             os.remove(self.LMLogFName)
 
         LMLogFle = open(self.LMLogFName, 'w')
-        subprocess.call([self.packagePrefix + self.LMPath + 'lmeasure', self.LMInputFName], \
+        subprocess.call([self.packagePrefix + self.LMPath + self.LMExec, self.LMInputFName], \
                         stdout=LMLogFle, stderr=LMLogFle)
 
         try:
-            LMOutputFile = open(self.LMOutputFName, 'r')
+            self.LMOutputFile = open(self.LMOutputFName, 'r')
+            self.LMOutputFile.close()
         except:
             print('No Output file created by Lmeasure. Check \'tmp/LMLog.txt\'')
             exit(1)
@@ -179,16 +192,22 @@ class LMIO:
 
     #*******************************************************************************************************************
 
-    def readlineTrap(self, fle):
+    def str2floatTrap(self, someStr):
         """
-        Reads a line from the specified 'fle' object and replaces all instances of '(0)' with 0.
-        :param fle: file object
+        Checks if there is either a starting '('  or an ending ')' around the input string and returns a string without them.
+        :param str: input string
         :return:
         """
 
-        tempStr = fle.readline()
-        return tempStr.replace('(0)', '0')
+        tempStr = someStr
 
+        if tempStr.startswith('('):
+            tempStr = tempStr[1:]
+
+        if tempStr.endswith(')'):
+            tempStr = tempStr[:len(tempStr) - 1]
+
+        return float(tempStr)
     #*******************************************************************************************************************
 
     def readOutput(self):
@@ -203,56 +222,56 @@ class LMIO:
 
             self.LMOutput['rawData'] = []
             prevLine = LMOutputFile.tell()
-            tempStr = self.readlineTrap(LMOutputFile)
+            tempStr = LMOutputFile.readline()
 
             while not tempStr.count('\t'):
 
                 prevLine = LMOutputFile.tell()
-                self.LMOutput['rawData'].append(float(tempStr))
-                tempStr = self.readlineTrap(LMOutputFile)
+                self.LMOutput['rawData'].append(self.str2floatTrap(tempStr))
+                tempStr = LMOutputFile.readline()
 
             LMOutputFile.seek(prevLine)
 
         if self.outputFormat == 1:
 
-            tempStr = self.readlineTrap(LMOutputFile)
+            tempStr = LMOutputFile.readline()
             tempWords = tempStr.split('\t')
-            self.LMOutput['TotalSum'] = float(tempWords[2])
-            self.LMOutput['CompartmentsConsidered'] = float(tempWords[3])
-            self.LMOutput['CompartmentsDiscarded'] = float(tempWords[4])
-            self.LMOutput['Minimum'] = float(tempWords[5])
-            self.LMOutput['Average'] = float(tempWords[6])
-            self.LMOutput['Maximum'] = float(tempWords[7])
-            self.LMOutput['StdDev'] = float(tempWords[8])
+            self.LMOutput['TotalSum'] = self.str2floatTrap(tempWords[2])
+            self.LMOutput['CompartmentsConsidered'] = self.str2floatTrap(tempWords[3])
+            self.LMOutput['CompartmentsDiscarded'] = self.str2floatTrap(tempWords[4])
+            self.LMOutput['Minimum'] = self.str2floatTrap(tempWords[5])
+            self.LMOutput['Average'] = self.str2floatTrap(tempWords[6])
+            self.LMOutput['Maximum'] = self.str2floatTrap(tempWords[7])
+            self.LMOutput['StdDev'] = self.str2floatTrap(tempWords[8])
 
         elif self.outputFormat == 2:
 
-            tempStr = self.readlineTrap(LMOutputFile)
+            tempStr = LMOutputFile.readline()
             tempWords = tempStr.split('\t')
             tempWords = tempWords[2:len(tempWords) - 1]
-            self.LMOutput['measure1BinCentres'] = [float(x) for x in tempWords]
+            self.LMOutput['measure1BinCentres'] = [self.str2floatTrap(x) for x in tempWords]
 
-            tempStr = self.readlineTrap(LMOutputFile)
+            tempStr = LMOutputFile.readline()
             tempWords = tempStr.split('\t')
             tempWords = tempWords[2:len(tempWords) - 1]
-            self.LMOutput['measure1BinCounts'] = [float(x) for x in tempWords]
+            self.LMOutput['measure1BinCounts'] = [self.str2floatTrap(x) for x in tempWords]
 
         elif self.outputFormat == 3:
 
-            tempStr = self.readlineTrap(LMOutputFile)
+            tempStr = LMOutputFile.readline()
             tempWords = tempStr.split('\t')
             tempWords = tempWords[2:len(tempWords) - 1]
-            self.LMOutput['measure1BinCentres'] = [float(x) for x in tempWords]
+            self.LMOutput['measure1BinCentres'] = [self.str2floatTrap(x) for x in tempWords]
 
-            tempStr = self.readlineTrap(LMOutputFile)
+            tempStr = LMOutputFile.readline()
             tempWords = tempStr.split('\t')
             tempWords = tempWords[2:len(tempWords) - 1]
-            self.LMOutput['measure2BinAverages'] = [float(x) for x in tempWords]
+            self.LMOutput['measure2BinAverages'] = [self.str2floatTrap(x) for x in tempWords]
 
-            tempStr = self.readlineTrap(LMOutputFile)
+            tempStr = LMOutputFile.readline()
             tempWords = tempStr.split('\t')
             tempWords = tempWords[1:len(tempWords) - 1]
-            self.LMOutput['measure2BinStdDevs'] = [float(x) for x in tempWords]
+            self.LMOutput['measure2BinStdDevs'] = [self.str2floatTrap(x) for x in tempWords]
 
         LMOutputFile.close()
 
@@ -267,7 +286,9 @@ class LMIO:
         :param Filter: Not implemented
         :return:
         """
-        self.line1 = '-f' + str(self.functionRef.index(measure)) + ',' + '0,0,10'
+        assert not measure == 'XYZ', 'Measure \'XYZ\' cannot be used with getMeasure()'
+
+        self.line1 = '-f' + str(self.functionRef[measure]) + ',' + '0,0,10'
 
         self.line2 = '-s' + self.LMOutputFName
 
@@ -292,8 +313,10 @@ class LMIO:
         :return:
         """
 
-        self.line1 = '-f' + str(self.functionRef.index(measure)) + ',' \
-                     + 'f' + str(self.functionRef.index(measure)) + ',' + '0,0,' + str(nBins)
+        assert not measure == 'XYZ', 'Measure \'XYZ\' cannot be used with getMeasureDistribution()'
+
+        self.line1 = '-f' + str(self.functionRef[measure]) + ',' \
+                     + 'f' + str(self.functionRef[measure]) + ',' + '0,0,' + str(nBins)
 
         self.line2 = '-s' + self.LMOutputFName
 
@@ -322,8 +345,11 @@ class LMIO:
         :return:
         """
 
-        self.line1 = '-f' + str(self.functionRef.index(measure1)) + ',' \
-                     + 'f' + str(self.functionRef.index(measure2)) + ',' + '1,0,' + str(nBins)
+        assert not measure1 == 'XYZ', 'Measure \'XYZ\' cannot be used with getMeasureDependence()'
+        assert not measure2 == 'XYZ', 'Measure \'XYZ\' cannot be used with getMeasureDependence()'
+
+        self.line1 = '-f' + str(self.functionRef[measure1]) + ',' \
+                     + 'f' + str(self.functionRef[measure2]) + ',' + '1,0,' + str(nBins)
 
         self.line2 = '-s' + self.LMOutputFName
 

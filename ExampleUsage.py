@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 testLMIO = LMIO('swcFiles/HB060602_3ptSoma.swc')
 
 # #*********************************************************************************************************************
-# # Testing LMIO.getMeasureDistribution
+# # Usage Example LMIO.getMeasureDistribution
 # #*********************************************************************************************************************
 # LMOutput = testLMIO.getMeasureDistribution('Diameter', nBins=50)
 # plt.figure()
@@ -18,21 +18,21 @@ testLMIO = LMIO('swcFiles/HB060602_3ptSoma.swc')
 #
 # #*********************************************************************************************************************
 
+#*********************************************************************************************************************
+# # Usage Example LMIO.getMeasure
+#*********************************************************************************************************************
+LMOutput = testLMIO.getMeasure('Branch_Order')
+print 'Neuron Surface is ' + str(LMOutput['Average'])
+
+#*********************************************************************************************************************
+
 # #*********************************************************************************************************************
-# # Testing LMIO.getMeasure
+# # Usage Example LMIO.getMeasureDependence
 # #*********************************************************************************************************************
-# LMOutput = testLMIO.getMeasure('Height')
-# print 'Neuron Height is ' + str(LMOutput['average'])
+# LMOutput = testLMIO.getMeasureDependence('Bif_ampl_local', 'EucDistance', nBins=50)
+# plt.figure()
+# plt.bar(LMOutput['measure1BinCentres'], LMOutput['measure2BinAverages'])
+# plt.draw()
+# plt.show(block=True)
 #
 # #*********************************************************************************************************************
-
-#*********************************************************************************************************************
-# Testing LMIO.getMeasureDependence
-#*********************************************************************************************************************
-LMOutput = testLMIO.getMeasureDependence('Bif_ampl_local', 'EucDistance', nBins=50)
-plt.figure()
-plt.bar(LMOutput['measure1BinCentres'], LMOutput['measure2BinAverages'])
-plt.draw()
-plt.show(block=True)
-
-#*********************************************************************************************************************
