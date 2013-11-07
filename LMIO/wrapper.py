@@ -139,6 +139,14 @@ class LMIO:
             self.LMPath = 'LMLinux' + bit[:2] + '/'
             self.LMExec = 'lmeasure'
 
+        elif osName == 'Darwin':
+            self.LMPath = 'LMMac'
+            self.LMExec = 'lmeasure'
+
+        elif osName == 'Windows':
+            self.LMPath = 'LMwin'
+            self.LMExec = 'Lm.exe'
+
         else:
             print 'Currently, this wrapper is supported only on Linux. Sorry for the inconvenience.'
             exit(1)
