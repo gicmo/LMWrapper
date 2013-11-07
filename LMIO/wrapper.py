@@ -186,7 +186,7 @@ class LMIO:
             os.remove(self.LMLogFName)
 
         LMLogFle = open(self.LMLogFName, 'w')
-        subprocess.call([self.packagePrefix + self.LMPath + self.LMExec, self.LMInputFName], \
+        subprocess.call([os.path.join(self.packagePrefix, self.LMPath, self.LMExec), self.LMInputFName], \
                         stdout=LMLogFle, stderr=LMLogFle)
 
         try:
